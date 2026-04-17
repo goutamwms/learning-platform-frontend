@@ -6,9 +6,9 @@ interface RequestOptions extends RequestInit {
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, ...fetchOptions } = options;
-  
+
   let url = `${API_BASE_URL}${endpoint}`;
-  
+
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -48,6 +48,5 @@ export const api = {
   put: <T>(endpoint: string, data?: unknown) =>
     request<T>(endpoint, { method: 'PUT', body: JSON.stringify(data) }),
 
-  delete: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCategories, useCreateCourse } from '../hooks';
 import { Button, Input } from '../components/common';
@@ -8,7 +8,7 @@ export function CreateSubcategory() {
   const [searchParams] = useSearchParams();
   const createCourse = useCreateCourse();
   const { data: categories } = useCategories();
-  
+
   const categoryParam = searchParams.get('category');
   const [categoryId, setCategoryId] = useState<number | ''>(
     categoryParam && !isNaN(Number(categoryParam)) ? Number(categoryParam) : ''
@@ -20,23 +20,23 @@ export function CreateSubcategory() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const newErrors: { category?: string; title?: string; slug?: string } = {};
     if (!categoryId) newErrors.category = 'Please select a category';
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!slug.trim()) newErrors.slug = 'Slug is required';
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
     try {
-      await createCourse.mutateAsync({ 
-        category_id: categoryId as number, 
-        title, 
-        slug, 
-        description 
+      await createCourse.mutateAsync({
+        category_id: categoryId as number,
+        title,
+        slug,
+        description,
       });
       navigate('/admin');
     } catch (error) {
@@ -57,16 +57,16 @@ export function CreateSubcategory() {
           </label>
           <select
             value={categoryId}
-            onChange={(e) => {
+            onChange={e => {
               setCategoryId(e.target.value ? Number(e.target.value) : '');
-              setErrors((prev) => ({ ...prev, category: undefined }));
+              setErrors(prev => ({ ...prev, category: undefined }));
             }}
             className={`w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff] ${
               errors.category ? 'border-red-500' : 'border-[#e5e4e7] dark:border-[#2e303a]'
             }`}
           >
             <option value="">Select a category...</option>
-            {categories?.map((category) => (
+            {categories?.map(category => (
               <option key={category.id} value={category.id}>
                 {category.title}
               </option>
@@ -78,9 +78,9 @@ export function CreateSubcategory() {
         <Input
           label="Title"
           value={title}
-          onChange={(e) => {
+          onChange={e => {
             setTitle(e.target.value);
-            setErrors((prev) => ({ ...prev, title: undefined }));
+            setErrors(prev => ({ ...prev, title: undefined }));
           }}
           onBlur={() => {
             if (title && !slug) {
@@ -94,9 +94,9 @@ export function CreateSubcategory() {
         <Input
           label="Slug"
           value={slug}
-          onChange={(e) => {
+          onChange={e => {
             setSlug(e.target.value);
-            setErrors((prev) => ({ ...prev, slug: undefined }));
+            setErrors(prev => ({ ...prev, slug: undefined }));
           }}
           placeholder="e.g., two-pointers"
           error={errors.slug}
@@ -108,7 +108,7 @@ export function CreateSubcategory() {
           </label>
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={e => setDescription(e.target.value)}
             rows={3}
             className="w-full px-3 py-2 text-sm rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
             placeholder="A brief description of this subcategory..."

@@ -13,11 +13,11 @@ export function CreateCategory() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const newErrors: { title?: string; slug?: string } = {};
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!slug.trim()) newErrors.slug = 'Slug is required';
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -41,9 +41,9 @@ export function CreateCategory() {
         <Input
           label="Title"
           value={title}
-          onChange={(e) => {
+          onChange={e => {
             setTitle(e.target.value);
-            setErrors((prev) => ({ ...prev, title: undefined }));
+            setErrors(prev => ({ ...prev, title: undefined }));
           }}
           onBlur={() => {
             if (title && !slug) {
@@ -57,9 +57,9 @@ export function CreateCategory() {
         <Input
           label="Slug"
           value={slug}
-          onChange={(e) => {
+          onChange={e => {
             setSlug(e.target.value);
-            setErrors((prev) => ({ ...prev, slug: undefined }));
+            setErrors(prev => ({ ...prev, slug: undefined }));
           }}
           placeholder="e.g., coding-patterns"
           error={errors.slug}
@@ -71,7 +71,7 @@ export function CreateCategory() {
           </label>
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={e => setDescription(e.target.value)}
             rows={3}
             className="w-full px-3 py-2 text-sm rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
             placeholder="A brief description of this category..."

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCourseById, useCategories, useUpdateCourse } from '../hooks';
 import { Button, Input } from '../components/common';
@@ -12,38 +12,45 @@ export function EditSubcategory() {
   const { data: course, isLoading } = useCourseById(courseId);
   const { data: categories } = useCategories();
 
-  const [categoryId, setCategoryId] = useState<number | ''>('');
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
-  const [errors, setErrors] = useState<{ category?: string; title?: string; slug?: string }>({});
-  const [isDirty, setIsDirty] = useState(false);
+  const [localChanges, setLocalChanges] = useState<{
+    categoryId?: number | '';
+    title?: string;
+    slug?: string;
+    description?: string;
+  }>({});
 
-  useEffect(() => {
-    if (course) {
-      setCategoryId(course.category_id);
-      setTitle(course.title);
-      setSlug(course.slug);
-      setDescription(course.description || '');
-    }
-  }, [course]);
+  const formData = useMemo(() => {
+    const base = course
+      ? {
+          categoryId: course.category_id,
+          title: course.title,
+          slug: course.slug,
+          description: course.description || '',
+        }
+      : {
+          categoryId: '' as number | '',
+          title: '',
+          slug: '',
+          description: '',
+        };
+    return { ...base, ...localChanges };
+  }, [course, localChanges]);
 
-  useEffect(() => {
-    if (course) {
-      const hasChanges =
-        categoryId !== course.category_id ||
-        title !== course.title ||
-        slug !== course.slug ||
-        description !== (course.description || '');
-      setIsDirty(hasChanges);
-    }
-  }, [categoryId, title, slug, description, course]);
+  const isDirty = useMemo(() => {
+    if (!course) return false;
+    return (
+      formData.categoryId !== course.category_id ||
+      formData.title !== course.title ||
+      formData.slug !== course.slug ||
+      formData.description !== (course.description || '')
+    );
+  }, [formData, course]);
 
   const handleSave = async () => {
     const newErrors: { category?: string; title?: string; slug?: string } = {};
-    if (!categoryId) newErrors.category = 'Please select a category';
-    if (!title.trim()) newErrors.title = 'Title is required';
-    if (!slug.trim()) newErrors.slug = 'Slug is required';
+    if (!formData.categoryId) newErrors.category = 'Please select a category';
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -53,9 +60,13 @@ export function EditSubcategory() {
     try {
       await updateCourse.mutateAsync({
         id: courseId!,
-        data: { category_id: categoryId as number, title, slug, description },
+        data: {
+          category_id: formData.categoryId as number,
+          title: formData.title,
+          slug: formData.slug,
+          description: formData.description,
+        },
       });
-      setIsDirty(false);
       navigate('/admin');
     } catch (error) {
       console.error('Failed to update subcategory:', error);
@@ -63,8 +74,8 @@ export function EditSubcategory() {
   };
 
   const handleTitleBlur = () => {
-    if (title && !slug) {
-      setSlug(generateSlug(title));
+    if (formData.title && !formData.slug) {
+      setLocalChanges(prev => ({ ...prev, slug: generateSlug(formData.title) }));
     }
   };
 
@@ -102,23 +113,32 @@ export function EditSubcategory() {
         </Button>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          handleSave();
+        }}
+        className="space-y-4"
+      >
         <div className="space-y-1">
           <label className="block text-sm font-medium text-[#08060d] dark:text-[#f3f4f6]">
             Parent Category
           </label>
           <select
-            value={categoryId}
-            onChange={(e) => {
-              setCategoryId(e.target.value ? Number(e.target.value) : '');
-              setErrors((prev) => ({ ...prev, category: undefined }));
+            value={formData.categoryId}
+            onChange={e => {
+              setLocalChanges(prev => ({
+                ...prev,
+                categoryId: e.target.value ? Number(e.target.value) : '',
+              }));
+              setErrors(prev => ({ ...prev, category: undefined }));
             }}
             className={`w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff] ${
               errors.category ? 'border-red-500' : 'border-[#e5e4e7] dark:border-[#2e303a]'
             }`}
           >
             <option value="">Select a category...</option>
-            {categories?.map((category) => (
+            {categories?.map(category => (
               <option key={category.id} value={category.id}>
                 {category.title}
               </option>
@@ -129,10 +149,10 @@ export function EditSubcategory() {
 
         <Input
           label="Title"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setErrors((prev) => ({ ...prev, title: undefined }));
+          value={formData.title}
+          onChange={e => {
+            setLocalChanges(prev => ({ ...prev, title: e.target.value }));
+            setErrors(prev => ({ ...prev, title: undefined }));
           }}
           onBlur={handleTitleBlur}
           placeholder="e.g., Two Pointers"
@@ -141,10 +161,10 @@ export function EditSubcategory() {
 
         <Input
           label="Slug"
-          value={slug}
-          onChange={(e) => {
-            setSlug(e.target.value);
-            setErrors((prev) => ({ ...prev, slug: undefined }));
+          value={formData.slug}
+          onChange={e => {
+            setLocalChanges(prev => ({ ...prev, slug: e.target.value }));
+            setErrors(prev => ({ ...prev, slug: undefined }));
           }}
           placeholder="e.g., two-pointers"
           error={errors.slug}
@@ -155,8 +175,8 @@ export function EditSubcategory() {
             Description (optional)
           </label>
           <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={formData.description}
+            onChange={e => setLocalChanges(prev => ({ ...prev, description: e.target.value }))}
             rows={3}
             className="w-full px-3 py-2 text-sm rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
             placeholder="A brief description of this subcategory..."

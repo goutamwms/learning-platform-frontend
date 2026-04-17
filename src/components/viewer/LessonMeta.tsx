@@ -15,9 +15,16 @@ interface LessonMetaProps {
   showDelete?: boolean;
 }
 
-export function LessonMeta({ title, breadcrumbs, lastUpdated, lessonId, onDelete, showDelete }: LessonMetaProps) {
+export function LessonMeta({
+  title,
+  breadcrumbs,
+  lastUpdated,
+  lessonId,
+  onDelete,
+  showDelete,
+}: LessonMetaProps) {
   const navigate = useNavigate();
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -43,9 +50,7 @@ export function LessonMeta({ title, breadcrumbs, lastUpdated, lessonId, onDelete
         ))}
       </nav>
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">
-          {title}
-        </h1>
+        <h1 className="text-3xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">{title}</h1>
         <div className="flex items-center gap-2">
           {lessonId && (
             <Button

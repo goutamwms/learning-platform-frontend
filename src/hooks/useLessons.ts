@@ -11,7 +11,8 @@ interface UseLessonParams {
 export function useLesson(params: UseLessonParams) {
   return useQuery<Lesson>({
     queryKey: ['lesson', params],
-    queryFn: () => lessonService.getBySlug(params.categorySlug, params.lessonSlug, params.courseSlug),
+    queryFn: () =>
+      lessonService.getBySlug(params.categorySlug, params.lessonSlug, params.courseSlug),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -27,7 +28,7 @@ export function useLessonById(id: number | null) {
 
 export function useCreateLesson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       category_id: number;
@@ -46,10 +47,21 @@ export function useCreateLesson() {
 
 export function useUpdateLesson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { title?: string; slug?: string; content?: string; category_id?: number; course_id?: number | null } }) =>
-      lessonService.update(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: {
+        title?: string;
+        slug?: string;
+        content?: string;
+        category_id?: number;
+        course_id?: number | null;
+      };
+    }) => lessonService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lesson'] });
       queryClient.invalidateQueries({ queryKey: ['lessonById'] });
@@ -59,7 +71,7 @@ export function useUpdateLesson() {
 
 export function useDeleteLesson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: number) => lessonService.delete(id),
     onSuccess: () => {

@@ -11,7 +11,7 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { common, createLowlight } from 'lowlight';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { Toolbar } from './Toolbar';
 import { uploadService } from '../../services';
 
@@ -29,6 +29,23 @@ export function RichEditor({
   placeholder = 'Start writing...',
 }: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 1. Keep a stable ref to the editor instance so paste/drop handlers
+  //    (captured once during useEditor) can always access the latest value
+  //    without causing stale-closure warnings.
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    const currentEditor = editorRef.current;
+    if (!currentEditor) return;
+
+    try {
+      const { url } = await uploadService.uploadImage(file);
+      currentEditor.chain().focus().setImage({ src: url }).run();
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+    }
+  }, []); // editorRef is a stable ref — no dependency needed
 
   const editor = useEditor({
     extensions: [
@@ -78,15 +95,15 @@ export function RichEditor({
       }),
     ],
     content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+    onUpdate: ({ editor: updatedEditor }) => {
+      onChange(updatedEditor.getHTML());
     },
     editorProps: {
       attributes: {
         class:
           'prose prose-sm sm:prose lg:prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-3',
       },
-      handlePaste: (view, event) => {
+      handlePaste: (_view, event) => {
         const items = event.clipboardData?.items;
         if (!items) return false;
 
@@ -127,7 +144,8 @@ export function RichEditor({
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const tableHtml = doc.body.innerHTML;
-                editor.chain().focus().insertContent(tableHtml).run();
+                // 2. Use editorRef instead of editor.current
+                editorRef.current?.chain().focus().insertContent(tableHtml).run();
                 return true;
               }
             }
@@ -158,7 +176,7 @@ export function RichEditor({
         }
         return false;
       },
-      handleDrop: (view, event) => {
+      handleDrop: (_view, event) => {
         const files = event.dataTransfer?.files;
         if (!files || files.length === 0) return false;
 
@@ -174,33 +192,27 @@ export function RichEditor({
     },
   });
 
-  const handleImageUpload = useCallback(
-    async (file: File) => {
-      if (!editor) return;
+  // 3. Sync the editor instance into the ref after useEditor resolves
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
-      try {
-        const { url } = await uploadService.uploadImage(file);
-        editor.chain().focus().setImage({ src: url }).run();
-      } catch (error) {
-        console.error('Failed to upload image:', error);
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        handleImageUpload(file);
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     },
-    [editor]
+    [handleImageUpload]
   );
-
-  const handleImageButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageUpload(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   if (!editor) {
     return null;

@@ -9,6 +9,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
   const navigate = useNavigate();
 
   const handleCardClick = (e: React.MouseEvent) => {
+    console.log(e.type);
     navigate(`/courses/${category.slug}`);
   };
 
@@ -29,7 +30,13 @@ export function CategoryCard({ category }: CategoryCardProps) {
           )}
         </div>
         <div className="flex items-center gap-1 px-2 py-1 bg-[#f4f3ec] dark:bg-[#2e303a] rounded-lg">
-          <svg className="w-4 h-4 text-[#6b6375] dark:text-[#9ca3af]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            className="w-4 h-4 text-[#6b6375] dark:text-[#9ca3af]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
           </svg>
@@ -42,7 +49,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
         <Link
           to={`/admin/lessons/new?category=${category.id}`}
           className="text-[#aa3bff] hover:underline relative z-10"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           Add lesson
         </Link>
@@ -50,7 +57,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
         <Link
           to={`/admin/subcategories/new?category=${category.id}`}
           className="text-[#aa3bff] hover:underline relative z-10"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           Add subcategory
         </Link>
@@ -58,7 +65,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
         <Link
           to={`/admin/categories/${category.id}/edit`}
           className="text-[#aa3bff] hover:underline relative z-10"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           Edit
         </Link>
@@ -66,7 +73,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
         <Link
           to={`/admin/subcategories?category=${category.id}`}
           className="text-[#aa3bff] hover:underline relative z-10"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           Subcategories
         </Link>

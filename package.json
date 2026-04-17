@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "preview": "vite preview",
-    "prepare": "husky init"
+    "prepare": "husky"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.99.0",

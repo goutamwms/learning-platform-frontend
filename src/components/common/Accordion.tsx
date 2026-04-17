@@ -8,13 +8,20 @@ interface AccordionProps {
 
 export function Accordion({ title, defaultOpen = false, children }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [height, setHeight] = useState<number | undefined>(undefined);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      setHeight(contentRef.current.scrollHeight);
+    }
+  }, [isOpen, children]);
 
   return (
     <div className="mb-1">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full py-1.5 px-3 text-sm font-medium text-[#08060d] dark:text-[#f3f4f6] hover:bg-[#f4f3ec] dark:hover:bg-[#2e303a] rounded transition-colors"
+        className="flex items-center justify-between w-full py-1.5 px-3 text-sm font-medium text-[rgb(221,221,221)] hover:bg-[#555] rounded transition-colors"
       >
         <span className="flex items-center gap-1">
           <svg
@@ -31,10 +38,8 @@ export function Accordion({ title, defaultOpen = false, children }: AccordionPro
       </button>
       <div
         ref={contentRef}
-        className={`overflow-hidden transition-all duration-200 ${
-          isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-        style={{ maxHeight: isOpen ? contentRef.current?.scrollHeight : 0 }}
+        className="overflow-hidden transition-all duration-200"
+        style={{ maxHeight: isOpen ? (height ?? 500) : 0, opacity: isOpen ? 1 : 0 }}
       >
         <div className="pl-4 py-1">{children}</div>
       </div>

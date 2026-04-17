@@ -8,7 +8,7 @@ export function Dashboard() {
   const { data: categories, isLoading, error } = useCategories();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredCategories = categories?.filter((category) =>
+  const filteredCategories = categories?.filter(category =>
     category.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -16,9 +16,7 @@ export function Dashboard() {
     <div className="p-6 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">
-            Dashboard
-          </h1>
+          <h1 className="text-2xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">Dashboard</h1>
           <p className="text-sm text-[#6b6375] dark:text-[#9ca3af] mt-1">
             Manage your learning content
           </p>
@@ -33,7 +31,7 @@ export function Dashboard() {
           type="text"
           placeholder="Search categories..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className="w-full max-w-md px-4 py-2 text-sm rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
         />
       </div>
@@ -41,10 +39,7 @@ export function Dashboard() {
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="h-32 bg-[#f4f3ec] dark:bg-[#2e303a] rounded-xl animate-pulse"
-            />
+            <div key={i} className="h-32 bg-[#f4f3ec] dark:bg-[#2e303a] rounded-xl animate-pulse" />
           ))}
         </div>
       )}

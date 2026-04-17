@@ -21,8 +21,16 @@ export const lessonService = {
     content?: string;
   }) => api.post<Lesson>('/lessons', data),
 
-  update: (id: number, data: { title?: string; slug?: string; content?: string; category_id?: number; course_id?: number | null }) =>
-    api.put<Lesson>(`/lessons/${id}`, data),
+  update: (
+    id: number,
+    data: {
+      title?: string;
+      slug?: string;
+      content?: string;
+      category_id?: number;
+      course_id?: number | null;
+    }
+  ) => api.put<Lesson>(`/lessons/${id}`, data),
 
   delete: (id: number) => api.delete<void>(`/lessons/${id}`),
 };

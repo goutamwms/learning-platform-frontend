@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAllCourses, useCategories, useUpdateCourse, useDeleteCourse } from '../hooks';
 import { Button } from '../components/common';
@@ -9,33 +9,52 @@ const PAGE_SIZE = 10;
 type SortField = 'title' | 'created_at' | 'lesson_count';
 type SortOrder = 'asc' | 'desc';
 
+const SortIcon = ({
+  field,
+  sortField,
+  sortOrder,
+}: {
+  field: SortField;
+  sortField: SortField;
+  sortOrder: SortOrder;
+}) => (
+  <span className={`ml-1 ${sortField === field ? 'text-[#aa3bff]' : 'text-[#9ca3af]'}`}>
+    {sortField === field ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
+  </span>
+);
+
 export function Subcategories() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const categoryParam = searchParams.get('category');
-  const categoryFilter = categoryParam && !isNaN(Number(categoryParam)) ? Number(categoryParam) : undefined;
+  const categoryFilter =
+    categoryParam && !isNaN(Number(categoryParam)) ? Number(categoryParam) : undefined;
   const page = Number(searchParams.get('page') || '1');
-  
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [sortField, setSortField] = useState<SortField>((searchParams.get('sort_by') as SortField) || 'title');
-  const [sortOrder, setSortOrder] = useState<SortOrder>((searchParams.get('sort_order') as SortOrder) || 'asc');
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
-  
+
+  const [sortField, setSortField] = useState<SortField>(
+    (searchParams.get('sort_by') as SortField) || 'title'
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>(
+    (searchParams.get('sort_order') as SortOrder) || 'asc'
+  );
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const search = useMemo(() => searchParams.get('search') || '', [searchParams]);
+
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editValues, setEditValues] = useState<{ title: string; slug: string; description: string; category_id: number } | null>(null);
-  
+  const [editValues, setEditValues] = useState<{
+    title: string;
+    slug: string;
+    description: string;
+    category_id: number;
+  } | null>(null);
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-  
+
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: categories } = useCategories();
-  
-  useEffect(() => {
-    const searchParam = searchParams.get('search');
-    setSearch(searchParam || '');
-    setDebouncedSearch(searchParam || '');
-  }, [searchParams]);
 
   const { data, isLoading, isFetching } = useAllCourses({
     skip: (page - 1) * PAGE_SIZE,
@@ -50,13 +69,12 @@ export function Subcategories() {
   const deleteCourse = useDeleteCourse();
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(value);
-      setSearchParams((prev) => {
+      setSearchParams(prev => {
         const newParams = new URLSearchParams(prev);
         newParams.set('page', '1');
         if (value) {
@@ -73,7 +91,7 @@ export function Subcategories() {
     const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
     setSortField(field);
     setSortOrder(newOrder);
-    setSearchParams((prev) => {
+    setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('sort_by', field);
       newParams.set('sort_order', newOrder);
@@ -83,7 +101,7 @@ export function Subcategories() {
   };
 
   const handleCategoryFilter = (categoryId: number | undefined) => {
-    setSearchParams((prev) => {
+    setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('page', '1');
       if (categoryId) {
@@ -96,22 +114,31 @@ export function Subcategories() {
   };
 
   const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => {
+    setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('page', String(newPage));
       return newParams;
     });
   };
 
-  const startEditing = useCallback((course: { id: number; title: string; slug: string; description: string | null; category_id: number }) => {
-    setEditingId(course.id);
-    setEditValues({
-      title: course.title,
-      slug: course.slug,
-      description: course.description || '',
-      category_id: course.category_id,
-    });
-  }, []);
+  const startEditing = useCallback(
+    (course: {
+      id: number;
+      title: string;
+      slug: string;
+      description: string | null;
+      category_id: number;
+    }) => {
+      setEditingId(course.id);
+      setEditValues({
+        title: course.title,
+        slug: course.slug,
+        description: course.description || '',
+        category_id: course.category_id,
+      });
+    },
+    []
+  );
 
   const cancelEditing = useCallback(() => {
     setEditingId(null);
@@ -120,9 +147,9 @@ export function Subcategories() {
 
   const saveEdit = useCallback(async () => {
     if (!editingId || !editValues) return;
-    
+
     if (!editValues.title.trim() || !editValues.slug.trim()) return;
-    
+
     try {
       await updateCourse.mutateAsync({
         id: editingId,
@@ -140,22 +167,27 @@ export function Subcategories() {
     }
   }, [editingId, editValues, updateCourse]);
 
-  const handleDelete = useCallback(async (id: number) => {
-    try {
-      await deleteCourse.mutateAsync(id);
-      setDeleteConfirmId(null);
-    } catch (error) {
-      console.error('Failed to delete subcategory:', error);
-    }
-  }, [deleteCourse]);
+  const handleDelete = useCallback(
+    async (id: number) => {
+      try {
+        await deleteCourse.mutateAsync(id);
+        setDeleteConfirmId(null);
+      } catch (error) {
+        console.error('Failed to delete subcategory:', error);
+      }
+    },
+    [deleteCourse]
+  );
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
+  /*
   const SortIcon = ({ field }: { field: SortField }) => (
     <span className={`ml-1 ${sortField === field ? 'text-[#aa3bff]' : 'text-[#9ca3af]'}`}>
       {sortField === field ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
     </span>
   );
+  */
 
   if (isLoading) {
     return (
@@ -193,17 +225,17 @@ export function Subcategories() {
             type="text"
             placeholder="Search subcategories..."
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
           />
         </div>
         <select
           value={categoryFilter || ''}
-          onChange={(e) => handleCategoryFilter(e.target.value ? Number(e.target.value) : undefined)}
+          onChange={e => handleCategoryFilter(e.target.value ? Number(e.target.value) : undefined)}
           className="px-4 py-2 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
         >
           <option value="">All Categories</option>
-          {categories?.map((cat) => (
+          {categories?.map(cat => (
             <option key={cat.id} value={cat.id}>
               {cat.title}
             </option>
@@ -216,26 +248,28 @@ export function Subcategories() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#e5e4e7] dark:border-[#2e303a] bg-[#f4f3ec] dark:bg-[#1a1b1f]">
-                <th 
+                <th
                   className="px-4 py-3 text-left text-sm font-medium text-[#08060d] dark:text-[#f3f4f6] cursor-pointer hover:bg-[#e5e4e7] dark:hover:bg-[#2e303a]"
                   onClick={() => handleSort('title')}
                 >
-                  Title <SortIcon field="title" />
+                  Title <SortIcon field="title" sortField={sortField} sortOrder={sortOrder} />
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-[#08060d] dark:text-[#f3f4f6]">
                   Category
                 </th>
-                <th 
+                <th
                   className="px-4 py-3 text-left text-sm font-medium text-[#08060d] dark:text-[#f3f4f6] cursor-pointer hover:bg-[#e5e4e7] dark:hover:bg-[#2e303a]"
                   onClick={() => handleSort('lesson_count')}
                 >
-                  Lessons <SortIcon field="lesson_count" />
+                  Lessons{' '}
+                  <SortIcon field="lesson_count" sortField={sortField} sortOrder={sortOrder} />
                 </th>
-                <th 
+                <th
                   className="px-4 py-3 text-left text-sm font-medium text-[#08060d] dark:text-[#f3f4f6] cursor-pointer hover:bg-[#e5e4e7] dark:hover:bg-[#2e303a]"
                   onClick={() => handleSort('created_at')}
                 >
-                  Created <SortIcon field="created_at" />
+                  Created{' '}
+                  <SortIcon field="created_at" sortField={sortField} sortOrder={sortOrder} />
                 </th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-[#08060d] dark:text-[#f3f4f6]">
                   Actions
@@ -245,14 +279,17 @@ export function Subcategories() {
             <tbody className="divide-y divide-[#e5e4e7] dark:divide-[#2e303a]">
               {data?.items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-[#6b6375] dark:text-[#9ca3af]">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-[#6b6375] dark:text-[#9ca3af]"
+                  >
                     {search ? 'No subcategories match your search' : 'No subcategories found'}
                   </td>
                 </tr>
               ) : (
-                data?.items.map((course) => (
-                  <tr 
-                    key={course.id} 
+                data?.items.map(course => (
+                  <tr
+                    key={course.id}
                     className={`${isFetching ? 'opacity-50' : ''} hover:bg-[#f4f3ec] dark:hover:bg-[#1a1b1f] transition-colors`}
                   >
                     <td className="px-4 py-3">
@@ -261,10 +298,16 @@ export function Subcategories() {
                           <input
                             type="text"
                             value={editValues?.title || ''}
-                            onChange={(e) => setEditValues(prev => prev ? { ...prev, title: e.target.value } : null)}
+                            onChange={e =>
+                              setEditValues(prev =>
+                                prev ? { ...prev, title: e.target.value } : null
+                              )
+                            }
                             onBlur={() => {
                               if (editValues && !editValues.slug && editValues.title) {
-                                setEditValues(prev => prev ? { ...prev, slug: generateSlug(editValues.title) } : null);
+                                setEditValues(prev =>
+                                  prev ? { ...prev, slug: generateSlug(editValues.title) } : null
+                                );
                               }
                             }}
                             className="w-full px-2 py-1 text-sm rounded border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
@@ -273,13 +316,21 @@ export function Subcategories() {
                           <input
                             type="text"
                             value={editValues?.slug || ''}
-                            onChange={(e) => setEditValues(prev => prev ? { ...prev, slug: e.target.value } : null)}
+                            onChange={e =>
+                              setEditValues(prev =>
+                                prev ? { ...prev, slug: e.target.value } : null
+                              )
+                            }
                             className="w-full px-2 py-1 text-sm rounded border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
                             placeholder="slug"
                           />
                           <textarea
                             value={editValues?.description || ''}
-                            onChange={(e) => setEditValues(prev => prev ? { ...prev, description: e.target.value } : null)}
+                            onChange={e =>
+                              setEditValues(prev =>
+                                prev ? { ...prev, description: e.target.value } : null
+                              )
+                            }
                             className="w-full px-2 py-1 text-sm rounded border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff] resize-none"
                             rows={2}
                             placeholder="Description (optional)"
@@ -302,10 +353,14 @@ export function Subcategories() {
                       {editingId === course.id ? (
                         <select
                           value={editValues?.category_id || ''}
-                          onChange={(e) => setEditValues(prev => prev ? { ...prev, category_id: Number(e.target.value) } : null)}
+                          onChange={e =>
+                            setEditValues(prev =>
+                              prev ? { ...prev, category_id: Number(e.target.value) } : null
+                            )
+                          }
                           className="px-2 py-1 text-sm rounded border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
                         >
-                          {categories?.map((cat) => (
+                          {categories?.map(cat => (
                             <option key={cat.id} value={cat.id}>
                               {cat.title}
                             </option>
@@ -328,18 +383,10 @@ export function Subcategories() {
                     <td className="px-4 py-3 text-right">
                       {editingId === course.id ? (
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="sm"
-                            onClick={saveEdit}
-                            disabled={updateCourse.isPending}
-                          >
+                          <Button size="sm" onClick={saveEdit} disabled={updateCourse.isPending}>
                             Save
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={cancelEditing}
-                          >
+                          <Button size="sm" variant="ghost" onClick={cancelEditing}>
                             Cancel
                           </Button>
                         </div>
@@ -396,7 +443,8 @@ export function Subcategories() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-[#e5e4e7] dark:border-[#2e303a] bg-[#f4f3ec] dark:bg-[#1a1b1f]">
             <div className="text-sm text-[#6b6375] dark:text-[#9ca3af]">
-              Showing {((page - 1) * PAGE_SIZE) + 1} to {Math.min(page * PAGE_SIZE, data?.total || 0)} of {data?.total} results
+              Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, data?.total || 0)}{' '}
+              of {data?.total} results
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -419,7 +467,7 @@ export function Subcategories() {
                   } else {
                     pageNum = page - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}

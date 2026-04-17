@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCategories, useCourses, useLessonById, useUpdateLesson, useDeleteLesson } from '../hooks';
+import {
+  useCategories,
+  useCourses,
+  useLessonById,
+  useUpdateLesson,
+  useDeleteLesson,
+} from '../hooks';
 import { Button, Input } from '../components/common';
 import { RichEditor } from '../components/editor';
 import { SaveIndicator } from '../components/common';
@@ -15,46 +21,54 @@ export function EditLesson() {
   const { data: categories } = useCategories();
   const lessonId = id ? parseInt(id, 10) : null;
   const { data: lesson, isLoading } = useLessonById(lessonId);
-  
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  
-  const [lessonData, setLessonData] = useState<{
-    id: number;
-    category_id: number;
-    course_id: number | null;
-    title: string;
-    slug: string;
-    content: string;
-  } | null>(null);
-  
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [content, setContent] = useState('');
-  const [courseId, setCourseId] = useState<number | ''>('');
-  const [categoryId, setCategoryId] = useState<number | ''>('');
-  
-  const category = categories?.find((c) => c.id === lessonData?.category_id);
-  const { data: courses } = useCourses(lessonData?.category_id || 0);
-  
-  useEffect(() => {
-    if (lesson) {
-      setLessonData(lesson as typeof lessonData);
-      setTitle(lesson.title);
-      setSlug(lesson.slug);
-      setContent(lesson.content || '');
-      setCourseId(lesson.course_id || '');
-      setCategoryId(lesson.category_id);
-    }
+
+  const [localChanges, setLocalChanges] = useState<{
+    title?: string;
+    slug?: string;
+    content?: string;
+    category_id?: number | '';
+    course_id?: number | '';
+  }>({});
+
+  const formData = useMemo(() => {
+    if (!lesson) return null;
+    return {
+      id: lesson.id,
+      category_id: lesson.category_id,
+      course_id: lesson.course_id || null,
+      title: lesson.title,
+      slug: lesson.slug,
+      content: lesson.content || '',
+    };
   }, [lesson]);
 
+  const mergedData = useMemo(() => {
+    if (!formData) return null;
+    return {
+      ...formData,
+      ...localChanges,
+      category_id:
+        localChanges.category_id !== undefined ? localChanges.category_id : formData.category_id,
+      course_id: localChanges.course_id !== undefined ? localChanges.course_id : formData.course_id,
+      title: localChanges.title ?? formData.title,
+      slug: localChanges.slug ?? formData.slug,
+      content: localChanges.content ?? formData.content,
+    };
+  }, [formData, localChanges]);
+
+  const category = categories?.find(c => c.id === mergedData?.category_id);
+  const { data: courses } = useCourses(mergedData?.category_id || 0);
+
   const { saveStatus } = useAutoSave(
-    content,
-    lessonData?.id || null,
-    async (newContent) => {
-      if (!lessonData?.id) return;
+    mergedData?.content || '',
+    mergedData?.id || null,
+    async newContent => {
+      if (!mergedData?.id) return;
       await updateLesson.mutateAsync({
-        id: lessonData.id,
+        id: mergedData.id,
         data: { content: newContent },
       });
     },
@@ -62,17 +76,17 @@ export function EditLesson() {
   );
 
   const handleTitleBlur = () => {
-    if (title && !slug) {
-      setSlug(generateSlug(title));
+    if (mergedData?.title && !mergedData?.slug) {
+      setLocalChanges(prev => ({ ...prev, slug: generateSlug(mergedData.title!) }));
     }
   };
 
   const handleSaveMetadata = async () => {
-    if (!lessonData?.id) return;
+    if (!mergedData?.id) return;
     try {
       await updateLesson.mutateAsync({
-        id: lessonData.id,
-        data: { title, slug },
+        id: mergedData.id,
+        data: { title: mergedData.title, slug: mergedData.slug },
       });
     } catch (error) {
       console.error('Failed to save metadata:', error);
@@ -80,21 +94,20 @@ export function EditLesson() {
   };
 
   const handleCategoryChange = (newCategoryId: number) => {
-    setCategoryId(newCategoryId);
-    setCourseId('');
-    if (lessonData?.id) {
+    setLocalChanges(prev => ({ ...prev, category_id: newCategoryId, course_id: '' }));
+    if (mergedData?.id) {
       updateLesson.mutate({
-        id: lessonData.id,
+        id: mergedData.id,
         data: { category_id: newCategoryId },
       });
     }
   };
 
   const handleCourseChange = (newCourseId: number | '') => {
-    setCourseId(newCourseId);
-    if (lessonData?.id) {
+    setLocalChanges(prev => ({ ...prev, course_id: newCourseId }));
+    if (mergedData?.id) {
       updateLesson.mutate({
-        id: lessonData.id,
+        id: mergedData.id,
         data: { course_id: newCourseId || null },
       });
     }
@@ -102,7 +115,7 @@ export function EditLesson() {
 
   const handleBack = () => {
     if (categorySlug && lesson?.slug) {
-      const url = lesson.course_id 
+      const url = lesson.course_id
         ? `/courses/${categorySlug}/${courseSlug}/${lesson.slug}`
         : `/courses/${categorySlug}/${lesson.slug}`;
       navigate(url);
@@ -112,17 +125,17 @@ export function EditLesson() {
   };
 
   const handleDelete = async () => {
-    if (!lessonData?.id || deleteConfirmText !== lesson.title) return;
+    if (!mergedData?.id || deleteConfirmText !== mergedData.title) return;
     try {
-      await deleteLesson.mutateAsync(lessonData.id);
+      await deleteLesson.mutateAsync(mergedData.id);
       navigate('/admin');
     } catch (error) {
       console.error('Failed to delete lesson:', error);
     }
   };
 
-  const categorySlug = categories?.find(c => c.id === lessonData?.category_id)?.slug;
-  const courseSlug = courses?.find(c => c.id === lessonData?.course_id)?.slug;
+  const categorySlug = categories?.find(c => c.id === mergedData?.category_id)?.slug;
+  const courseSlug = courses?.find(c => c.id === mergedData?.course_id)?.slug;
 
   if (isLoading) {
     return (
@@ -136,7 +149,7 @@ export function EditLesson() {
     );
   }
 
-  if (!lessonData) {
+  if (!mergedData) {
     return (
       <div className="p-6 max-w-4xl mx-auto text-center">
         <p className="text-[#6b6375] dark:text-[#9ca3af]">Lesson not found</p>
@@ -151,15 +164,12 @@ export function EditLesson() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">
-            Edit Lesson
-          </h1>
+          <h1 className="text-2xl font-semibold text-[#08060d] dark:text-[#f3f4f6]">Edit Lesson</h1>
           {category && (
             <p className="text-sm text-[#6b6375] dark:text-[#9ca3af]">
               {category.title}
-              {courses?.find((c) => c.id === courseId) && 
-                ` > ${courses.find((c) => c.id === courseId)?.title}`
-              }
+              {courses?.find(c => c.id === mergedData?.course_id) &&
+                ` > ${courses.find(c => c.id === mergedData?.course_id)?.title}`}
             </p>
           )}
         </div>
@@ -168,8 +178,8 @@ export function EditLesson() {
           <Button variant="ghost" onClick={handleBack}>
             Back
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => {
               setDeleteConfirmText('');
               setShowDeleteConfirm(true);
@@ -188,12 +198,12 @@ export function EditLesson() {
               Category
             </label>
             <select
-              value={categoryId}
-              onChange={(e) => handleCategoryChange(parseInt(e.target.value, 10))}
+              value={mergedData?.category_id ?? ''}
+              onChange={e => handleCategoryChange(parseInt(e.target.value, 10))}
               className="w-full px-3 py-2 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#1a1b1f] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
             >
               <option value="">Select Category</option>
-              {categories?.map((cat) => (
+              {categories?.map(cat => (
                 <option key={cat.id} value={cat.id}>
                   {cat.title}
                 </option>
@@ -205,12 +215,12 @@ export function EditLesson() {
               Subcategory (Course)
             </label>
             <select
-              value={courseId}
-              onChange={(e) => handleCourseChange(e.target.value ? parseInt(e.target.value, 10) : '')}
+              value={mergedData?.course_id ?? ''}
+              onChange={e => handleCourseChange(e.target.value ? parseInt(e.target.value, 10) : '')}
               className="w-full px-3 py-2 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#1a1b1f] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-[#aa3bff]"
             >
               <option value="">No Subcategory (Direct Lesson)</option>
-              {courses?.map((course) => (
+              {courses?.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.title}
                 </option>
@@ -221,10 +231,10 @@ export function EditLesson() {
 
         <Input
           label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={mergedData?.title ?? ''}
+          onChange={e => setLocalChanges(prev => ({ ...prev, title: e.target.value }))}
           onBlur={handleTitleBlur}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter') {
               e.preventDefault();
               handleSaveMetadata();
@@ -234,10 +244,10 @@ export function EditLesson() {
 
         <Input
           label="Slug"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
+          value={mergedData?.slug ?? ''}
+          onChange={e => setLocalChanges(prev => ({ ...prev, slug: e.target.value }))}
           onBlur={handleSaveMetadata}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter') {
               e.preventDefault();
               handleSaveMetadata();
@@ -249,7 +259,10 @@ export function EditLesson() {
           <label className="block text-sm font-medium text-[#08060d] dark:text-[#f3f4f6]">
             Content
           </label>
-          <RichEditor content={content} onChange={setContent} />
+          <RichEditor
+            content={mergedData?.content ?? ''}
+            onChange={val => setLocalChanges(prev => ({ ...prev, content: val }))}
+          />
         </div>
       </div>
 
@@ -260,22 +273,26 @@ export function EditLesson() {
               Delete Lesson
             </h2>
             <p className="text-[#6b6375] dark:text-[#9ca3af] mb-4">
-              Are you sure you want to delete "{lessonData?.title}"? This action cannot be undone.
+              Are you sure you want to delete "{mergedData?.title}"? This action cannot be undone.
             </p>
             <p className="text-sm text-[#6b6375] dark:text-[#9ca3af] mb-2">
-              Type <span className="font-medium text-[#08060d] dark:text-[#f3f4f6]">{lessonData?.title}</span> to confirm:
+              Type{' '}
+              <span className="font-medium text-[#08060d] dark:text-[#f3f4f6]">
+                {mergedData?.title}
+              </span>{' '}
+              to confirm:
             </p>
             <input
               type="text"
               value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              onChange={e => setDeleteConfirmText(e.target.value)}
               placeholder="Type lesson title to confirm"
               className="w-full px-3 py-2 mb-4 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-red-500"
               autoFocus
             />
             <div className="flex justify-end gap-3">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setDeleteConfirmText('');
@@ -285,7 +302,7 @@ export function EditLesson() {
               </Button>
               <Button
                 onClick={handleDelete}
-                disabled={deleteConfirmText !== lessonData?.title || deleteLesson.isPending}
+                disabled={deleteConfirmText !== mergedData?.title || deleteLesson.isPending}
                 className="bg-red-500 hover:bg-red-600 text-white disabled:bg-red-300"
               >
                 {deleteLesson.isPending ? 'Deleting...' : 'Delete'}

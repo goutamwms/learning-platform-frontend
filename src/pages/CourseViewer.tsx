@@ -7,14 +7,18 @@ import { LessonContent, LessonMeta } from '../components/viewer';
 export function CourseViewer() {
   const params = useParams();
   const navigate = useNavigate();
-  
+
   const categorySlug = params.categorySlug;
   const courseSlug = params.courseSlug;
   const lessonSlug = params.lessonSlug;
 
   const { data: category, isLoading, error: categoryError } = useCategory(categorySlug || '');
-  
-  const { data: lesson, isLoading: lessonLoading, error: lessonError } = useLesson({
+
+  const {
+    data: lesson,
+    isLoading: lessonLoading,
+    error: lessonError,
+  } = useLesson({
     categorySlug: categorySlug || '',
     lessonSlug: lessonSlug || '',
     courseSlug,
@@ -30,7 +34,9 @@ export function CourseViewer() {
       const firstLesson = findFirstLesson(category);
       if (firstLesson) {
         if (firstLesson.courseSlug) {
-          navigate(`/courses/${categorySlug}/${firstLesson.courseSlug}/${firstLesson.lessonSlug}`, { replace: true });
+          navigate(`/courses/${categorySlug}/${firstLesson.courseSlug}/${firstLesson.lessonSlug}`, {
+            replace: true,
+          });
         } else {
           navigate(`/courses/${categorySlug}/${firstLesson.lessonSlug}`, { replace: true });
         }
@@ -50,25 +56,27 @@ export function CourseViewer() {
     }
   };
 
+  /*
   const findNextLesson = () => {
     if (!category || !lesson) return null;
-    
+
     for (const course of category.courses) {
-      const lessonIndex = course.lessons.findIndex((l) => l.slug === lessonSlug);
+      const lessonIndex = course.lessons.findIndex(l => l.slug === lessonSlug);
       if (lessonIndex !== -1) {
         if (lessonIndex < course.lessons.length - 1) {
           return { lessonSlug: course.lessons[lessonIndex + 1].slug, courseSlug: course.slug };
         }
       }
     }
-    
-    const directIndex = category.direct_lessons.findIndex((l) => l.slug === lessonSlug);
+
+    const directIndex = category.direct_lessons.findIndex(l => l.slug === lessonSlug);
     if (directIndex !== -1 && directIndex < category.direct_lessons.length - 1) {
       return { lessonSlug: category.direct_lessons[directIndex + 1].slug, courseSlug: undefined };
     }
-    
+
     return null;
   };
+  */
 
   if (isLoading) {
     return (
@@ -143,14 +151,14 @@ export function CourseViewer() {
   const breadcrumbs: { label: string; href?: string }[] = [
     { label: category.title, href: `/courses/${category.slug}` },
   ];
-  
+
   if (courseSlug) {
-    const course = category.courses.find((c) => c.slug === courseSlug);
+    const course = category.courses.find(c => c.slug === courseSlug);
     if (course) {
       breadcrumbs.push({ label: course.title });
     }
   }
-  
+
   breadcrumbs.push({ label: lesson.title });
 
   const getCurrentCourseId = () => {
@@ -163,9 +171,9 @@ export function CourseViewer() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="flex flex-1">
-        <Sidebar 
-          category={category} 
-          activeLessonSlug={lessonSlug} 
+        <Sidebar
+          category={category}
+          activeLessonSlug={lessonSlug}
           activeCourseSlug={courseSlug}
           searchQuery={sidebarSearch}
           onSearchChange={setSidebarSearch}
@@ -214,19 +222,21 @@ export function CourseViewer() {
               Are you sure you want to delete "{lesson.title}"? This action cannot be undone.
             </p>
             <p className="text-sm text-[#6b6375] dark:text-[#9ca3af] mb-2">
-              Type <span className="font-medium text-[#08060d] dark:text-[#f3f4f6]">{lesson.title}</span> to confirm:
+              Type{' '}
+              <span className="font-medium text-[#08060d] dark:text-[#f3f4f6]">{lesson.title}</span>{' '}
+              to confirm:
             </p>
             <input
               type="text"
               value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              onChange={e => setDeleteConfirmText(e.target.value)}
               placeholder="Type lesson title to confirm"
               className="w-full px-3 py-2 mb-4 rounded-lg border border-[#e5e4e7] dark:border-[#2e303a] bg-white dark:bg-[#16171d] text-[#08060d] dark:text-[#f3f4f6] focus:outline-none focus:ring-2 focus:ring-red-500"
               autoFocus
             />
             <div className="flex justify-end gap-3">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setDeleteConfirmText('');
@@ -251,7 +261,7 @@ export function CourseViewer() {
 
 function findFirstLesson(category: ReturnType<typeof useCategory>['data']) {
   if (!category) return null;
-  
+
   for (const course of category.courses) {
     if (course.lessons.length > 0) {
       return {
@@ -260,13 +270,13 @@ function findFirstLesson(category: ReturnType<typeof useCategory>['data']) {
       };
     }
   }
-  
+
   if (category.direct_lessons.length > 0) {
     return {
       lessonSlug: category.direct_lessons[0].slug,
       courseSlug: undefined,
     };
   }
-  
+
   return null;
 }

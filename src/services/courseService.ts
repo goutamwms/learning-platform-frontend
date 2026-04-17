@@ -29,24 +29,26 @@ export const courseService = {
     if (params.skip) searchParams.set('skip', String(params.skip));
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.search) searchParams.set('search', params.search);
-    if (params.category_id && !isNaN(params.category_id)) searchParams.set('category_id', String(params.category_id));
+    if (params.category_id && !isNaN(params.category_id))
+      searchParams.set('category_id', String(params.category_id));
     if (params.sort_by) searchParams.set('sort_by', params.sort_by);
     if (params.sort_order) searchParams.set('sort_order', params.sort_order);
-    
+
     const query = searchParams.toString();
     return api.get<CoursesResponse>(`/courses${query ? `?${query}` : ''}`);
   },
 
-  getByCategory: (categoryId: number) =>
-    api.get<Course[]>(`/categories/${categoryId}/courses`),
+  getByCategory: (categoryId: number) => api.get<Course[]>(`/categories/${categoryId}/courses`),
 
   getById: (id: number) => api.get<Course>(`/courses/${id}`),
 
   create: (data: { category_id: number; title: string; slug: string; description?: string }) =>
     api.post<Course>('/courses', data),
 
-  update: (id: number, data: { title?: string; slug?: string; description?: string; category_id?: number }) =>
-    api.put<Course>(`/courses/${id}`, data),
+  update: (
+    id: number,
+    data: { title?: string; slug?: string; description?: string; category_id?: number }
+  ) => api.put<Course>(`/courses/${id}`, data),
 
   delete: (id: number) => api.delete<void>(`/courses/${id}`),
 };

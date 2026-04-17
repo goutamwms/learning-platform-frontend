@@ -10,23 +10,32 @@ export function useAutoSave(
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialContentRef = useRef<string | null>(null);
+  const isSavingRef = useRef(false);
 
-  const save = useCallback(async (value: string) => {
-    if (lessonId === null) return;
-    
-    try {
-      setSaveStatus('saving...');
-      await onSave(value);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
-      setSaveStatus('error');
-    }
-  }, [lessonId, onSave]);
+  const save = useCallback(
+    async (value: string) => {
+      if (lessonId === null) return;
+
+      isSavingRef.current = true;
+      try {
+        setSaveStatus('saving...');
+        await onSave(value);
+        setSaveStatus('saved');
+        setTimeout(() => {
+          setSaveStatus('idle');
+          isSavingRef.current = false;
+        }, 2000);
+      } catch {
+        setSaveStatus('error');
+        isSavingRef.current = false;
+      }
+    },
+    [lessonId, onSave]
+  );
 
   useEffect(() => {
     if (lessonId === null) return;
-    
+
     if (initialContentRef.current === null) {
       initialContentRef.current = content;
       return;
@@ -38,7 +47,6 @@ export function useAutoSave(
       clearTimeout(timeoutRef.current);
     }
 
-    setSaveStatus('saving...');
     timeoutRef.current = setTimeout(() => {
       save(content);
       initialContentRef.current = content;

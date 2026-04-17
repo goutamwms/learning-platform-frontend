@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, type InputHTMLAttributes } from 'react';
+import { forwardRef, useMemo, type InputHTMLAttributes } from 'react';
 import { generateSlug } from '../../utils/slug';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,15 +10,16 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className = '', label, error, generateSlugFrom, onSlugChange, ...props }, ref) => {
-    const [internalSlug, setInternalSlug] = useState('');
-
-    useEffect(() => {
+    const derivedSlug = useMemo(() => {
       if (generateSlugFrom !== undefined && !props.value) {
-        const newSlug = generateSlug(generateSlugFrom);
-        setInternalSlug(newSlug);
-        onSlugChange?.(newSlug);
+        return generateSlug(generateSlugFrom);
       }
-    }, [generateSlugFrom, props.value, onSlugChange]);
+      return null;
+    }, [generateSlugFrom, props.value]);
+
+    if (derivedSlug !== null) {
+      onSlugChange?.(derivedSlug);
+    }
 
     return (
       <div className="space-y-1">
