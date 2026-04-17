@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+code {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+.lesson-content h1,
+.lesson-content h2,
+.lesson-content h3,
+.lesson-content h4,
+.lesson-content h5,
+.lesson-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--text-h);
+}
+
+.lesson-content h1:first-child,
+.lesson-content h2:first-child,
+.lesson-content h3:first-child {
+  margin-top: 0;
+}
+
+.lesson-content p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  line-height: 1.7;
+}
+
+.lesson-content p:first-child {
+  margin-top: 0;
+}
+
+.lesson-content p:last-child {
+  margin-bottom: 0;
+}
+
+.lesson-content ul,
+.lesson-content ol {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+
+.lesson-content li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+  line-height: 1.6;
+}
+
+.lesson-content blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-bg);
+  border-radius: 0 4px 4px 0;
+}
+
+.lesson-content pre {
+  margin: 1em 0;
+  padding: 1em;
+  background: var(--code-bg);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.lesson-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.lesson-content a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.lesson-content a:hover {
+  opacity: 0.8;
+}
+
+.lesson-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
+  border-radius: 8px;
+}
+
+.lesson-content hr {
+  margin: 2em 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.lesson-content table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+}
+
+.lesson-content th,
+.lesson-content td {
+  padding: 0.5em;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.lesson-content th {
+  background: var(--code-bg);
+  font-weight: 500;
+}
