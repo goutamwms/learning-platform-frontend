@@ -19,6 +19,8 @@ export function EditSubcategory() {
     description?: string;
   }>({});
 
+  const [errors, setErrors] = useState<{ category?: string; title?: string; slug?: string }>({});
+
   const formData = useMemo(() => {
     const base = course
       ? {

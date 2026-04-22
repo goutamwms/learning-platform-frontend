@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { courseService, type GetCoursesParams, type CoursesResponse } from '../services';
+import { courseService, type GetCoursesParams, type CoursesResponse } from '../services/courseService';
 
 export function useCourses(categoryId: number) {
   return useQuery({

@@ -323,11 +323,11 @@ export function Toolbar({ editor, onImageClick }: ToolbarProps) {
               key={item.title}
               onClick={item.action}
               title={item.title}
-              disabled={item.disabled}
+              disabled={(item as any).disabled ?? false}
               className={`p-1.5 rounded text-sm font-medium min-w-[28px] transition-colors ${
                 item.isActive
                   ? 'bg-[#aa3bff] text-white'
-                  : item.disabled
+                  : ((item as any).disabled ?? false)
                     ? 'text-[#c4c3c7] dark:text-[#5a5a65] cursor-not-allowed opacity-50'
                     : 'text-[#6b6375] dark:text-[#9ca3af] hover:bg-[#f4f3ec] dark:hover:bg-[#2e303a]'
               }`}

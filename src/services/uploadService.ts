@@ -1,5 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-const UPLOAD_BASE_URL = import.meta.env.VITE_UPLOAD_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const UPLOAD_BASE_URL = import.meta.env.VITE_UPLOAD_BASE_URL || '';
 
 export const uploadService = {
   uploadImage: async (file: File): Promise<{ url: string }> => {
@@ -9,6 +9,7 @@ export const uploadService = {
     const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     });
 
     if (!response.ok) {

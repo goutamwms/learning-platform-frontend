@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCategories } from '../hooks';
+import { useAuth } from '../context/AuthContext';
 import { CategoryGrid } from '../components/dashboard';
 import { Button } from '../components/common';
 
 export function Dashboard() {
   const { data: categories, isLoading, error } = useCategories();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCategories = categories?.filter(category =>
@@ -21,9 +23,26 @@ export function Dashboard() {
             Manage your learning content
           </p>
         </div>
-        <Link to="/admin/categories/new">
-          <Button>New Category</Button>
-        </Link>
+        <div className={`flex gap-3 ${isLoading ? 'opacity-50 hidden' : ''}`} >
+          {!isAuthenticated && (
+            <>
+              <Link to="/login" className="flex items-center gap-1 text-blue-600 hover:underline px-3 py-2">
+                Login
+              </Link>
+              <Link to="/signup">
+                <Button>Sign Up</Button>
+              </Link>
+            </>
+          )}
+          {isAuthenticated && (
+            <Link to="/admin/categories/new">
+              <Button>New Category</Button>
+            </Link>
+          )}
+          <Link to="/topics">
+            <Button variant="secondary">Topics</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6">

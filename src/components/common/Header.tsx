@@ -1,33 +1,71 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export function Header() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-[#16171d] border-b border-[#e5e4e7] dark:border-[#2e303a]">
-      <div className="flex items-center justify-between h-14 px-4 max-w-[1400px] mx-auto">
-        <Link
-          to="/"
-          className="flex items-center gap-2 font-medium text-[#08060d] dark:text-[#f3f4f6]"
-        >
-          <svg
-            className="w-6 h-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-          </svg>
-          Learning Platform
-        </Link>
-        <nav className="flex items-center gap-4">
-          <Link
-            to="/admin"
-            className="text-sm font-medium text-[#6b6375] dark:text-[#9ca3af] hover:text-[#08060d] dark:hover:text-[#f3f4f6] transition-colors"
-          >
-            Dashboard
-          </Link>
-        </nav>
+    <header className="bg-white shadow">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center gap-6">
+            <Link to="/" className="text-xl font-bold">
+              Learning Platform
+            </Link>
+            
+            <nav className="flex gap-4">
+              <Link to="/topics" className="text-gray-700 hover:text-blue-600">
+                Topics
+              </Link>
+              
+              {isAuthenticated && (
+                <Link to="/dashboard" className="text-gray-700 hover:text-blue-600">
+                  My Dashboard
+                </Link>
+              )}
+              
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="text-gray-700 hover:text-blue-600">
+                  Admin
+                </Link>
+              )}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <>
+                <span className="text-sm text-gray-600">
+                  {user?.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-700 hover:text-blue-600"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm text-gray-700 hover:text-blue-600">
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );
